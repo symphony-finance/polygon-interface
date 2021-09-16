@@ -57,7 +57,7 @@ export default function Footer() {
             id="link"
             rel="noopener noreferrer"
             target="_blank"
-            href="https://symphony-finance.medium.com/introduction-to-symphony-finance-f597f1ac0d95"
+            href="https://symphonyfi.gitbook.io/docs/"
           >
             <h1 id="title">About </h1>
           </Link>
@@ -65,7 +65,7 @@ export default function Footer() {
             id="link"
             rel="noopener noreferrer"
             target="_blank"
-            href="https://symphony-finance.medium.com/introduction-to-symphony-finance-f597f1ac0d95"
+            href="https://symphonyfi.gitbook.io/docs/how-to-use-it"
           >
             <h1 id="title">Docs </h1>
           </Link>
@@ -73,7 +73,7 @@ export default function Footer() {
             id="link"
             rel="noopener noreferrer"
             target="_blank"
-            href="https://symphony-finance.medium.com/introduction-to-symphony-finance-f597f1ac0d95"
+            href="https://symphonyfi.gitbook.io/docs/developers/audit"
           >
             <h1 id="title">Audit </h1>
           </Link>

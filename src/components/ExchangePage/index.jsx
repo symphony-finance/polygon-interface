@@ -23,7 +23,7 @@ import { useSymphonyContract, useWETHGatewayContract } from '../../hooks'
 import { ACTION_PLACE_ORDER, useTransactionAdder } from '../../contexts/Transactions'
 import { amountFormatter, getERC20Contract, getTokenAllowance, getOrderId } from '../../utils'
 import {
-  ETH_ADDRESS,
+  // ETH_ADDRESS,
   WETH_ADDRESSES,
   SYMPHONY_ADDRESSES,
   // GENERIC_GAS_LIMIT_ORDER_EXECUTE,
@@ -551,7 +551,7 @@ export default function ExchangePage({ initialCurrency }) {
       toCurrency = outputCurrency
     } else if (swapType === TOKEN_TO_ETH) {
       fromCurrency = inputCurrency
-      toCurrency = ETH_ADDRESS
+      toCurrency = WETH_ADDRESSES[chainId]
     } else if (swapType === TOKEN_TO_TOKEN) {
       fromCurrency = inputCurrency
       toCurrency = outputCurrency
@@ -615,8 +615,7 @@ export default function ExchangePage({ initialCurrency }) {
         setShowConfirm(true)
       }
     } catch (e) {
-      console.log('Error on place order', e.message)
-      setOrderErrorMessage(e.message)
+      setOrderErrorMessage(e.data ? e.data.message: e.message)
       setShowConfirm(true)
     }
   }
@@ -806,7 +805,7 @@ export default function ExchangePage({ initialCurrency }) {
             : t('placeAbove', { rateDelta: rateDeltaFormatted })}
         </div>
       )}
-      {highSlippageWarning && (
+      {/* {highSlippageWarning && (
         <div className="slippage-warning">
           <span role="img" aria-label="warning">
             ⚠️
@@ -821,7 +820,7 @@ export default function ExchangePage({ initialCurrency }) {
           </span>
           Order too small, extreme execution rate
         </div>
-      )}
+      )} */}
 
       {orderErrorMessage ? (
         <TransactionErrorModal

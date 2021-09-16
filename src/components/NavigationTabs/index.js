@@ -80,7 +80,7 @@ function NavigationTabs({ location: { pathname }, history }) {
             💀
           </span>{' '}
           {t('betaWarning')}
-          <Link id="link" href="https://symphony-finance.medium.com/introduction-to-symphony-finance-f597f1ac0d95" className="how-it-works">
+          <Link id="link" href="https://symphonyfi.gitbook.io/docs/how-to-use-it" className="how-it-works">
             {t('seeHowItWorks')}
           </Link>
         </BetaMessage>

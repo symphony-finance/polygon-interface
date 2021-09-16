@@ -79,9 +79,9 @@ export function TransactionErrorModal({ message, isOpen, onDismiss }) {
           </RowBetween>
           <AutoColumn style={{ marginTop: 20, padding: '2rem 0' }} gap="24px" justify="center">
             <AlertTriangle color='#FD4040' style={{ strokeWidth: 1.5 }} size={64} />
-            <Text fontWeight={500} fontSize={16} color='#FD4040' style={{ textAlign: 'center', width: '85%' }}>
+            <p fontWeight={500} fontSize={16} color='#FD4040' style={{ textAlign: 'center', width: '85%' }}>
               {message}
-            </Text>
+            </p>
           </AutoColumn>
         </Section>
         <BottomSection gap="12px">

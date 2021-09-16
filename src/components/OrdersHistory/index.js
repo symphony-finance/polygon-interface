@@ -35,7 +35,11 @@ function usePastOrders(account, chainId) {
 async function fetchUserPastOrders(account, chainId) {
   const query = `
   query GetOrdersByOwner($owner: String) {
-    orders(where:{recipient:$owner,status_not:ACTIVE}) {
+    orders(
+      where:{recipient:$owner,status_not:ACTIVE},
+      orderBy: updatedAt, 
+      orderDirection: desc
+    ) {
       id
       inputToken
       outputToken

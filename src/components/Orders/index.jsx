@@ -37,7 +37,11 @@ function getSavedOrders(account, chainId) {
 async function fetchUserOrders(account, chainId) {
   const query = `
   query GetOrdersByOwner($owner: String) {
-    orders(where:{recipient:$owner,status:ACTIVE}) {
+    orders(
+      where:{recipient:$owner,status:ACTIVE},
+      orderBy: createdAtBlock, 
+      orderDirection: desc
+    ) {
       id
       orderId
       recipient {
