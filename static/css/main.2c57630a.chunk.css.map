@@ -1,0 +1,1 @@
+{"version":3,"sources":["index.css"],"names":[],"mappings":"AAAA,kBACI,YAAa,CACb,wBACJ,CAEA,wBACI,SACJ","file":"main.2c57630a.chunk.css","sourcesContent":["svg .symphonyFill {\n    fill: #01796f;\n    transition: fill 0.5s ease;\n}\n\nsvg:hover .symphonyFill {\n    fill: black;\n}"]}
