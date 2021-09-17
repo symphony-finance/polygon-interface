@@ -11,7 +11,7 @@ import ArrowDown from '../../assets/svg/SVGArrowDown'
 import { amountFormatter } from '../../utils'
 import { useSymphonyContract } from '../../hooks'
 // import { useTradeExactIn } from '../../hooks/trade'
-import {  useTokenDetails } from '../../contexts/Tokens'
+import { useTokenDetails } from '../../contexts/Tokens'
 // import { useGasPrice } from '../../contexts/GasPrice'
 import {
   ACTION_PLACE_ORDER,
@@ -23,6 +23,7 @@ import { ETH_ADDRESS } from '../../constants'
 import { getExchangeRate } from '../../utils/rate'
 
 import './OrderCard.css'
+import { getGasPrice } from '../../utils/gas'
 
 const CancelButton = styled.div`
   color: ${({ selected, theme }) => (selected ? theme.textColor : theme.textColor)};
@@ -83,12 +84,23 @@ export function OrderCard(props) {
 
   async function onCancel(order, pending) {
     const { orderId, orderEncodedData } = order
+    const gasPrice = await getGasPrice();
+    let gasLimit = await symphonyContract.estimateGas.cancelOrder(
+      orderId,
+      orderEncodedData,
+      {
+        gasPrice
+      }
+    );
+    gasLimit = gasLimit.add(ethers.BigNumber.from(50000))
+
     symphonyContract
       .cancelOrder(
         orderId,
         orderEncodedData,
         {
-          gasLimit: pending ? 400000 : undefined
+          gasLimit,
+          gasPrice,
         }
       )
       .then(response => {

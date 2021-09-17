@@ -31,6 +31,7 @@ import {
 } from '../../constants'
 
 import './ExchangePage.css'
+import { getGasPrice } from '../../utils/gas'
 
 // Use to detach input from output
 let inputValue
@@ -572,13 +573,33 @@ export default function ExchangePage({ initialCurrency }) {
 
       if (orderHash === ZERO_BYTES32) {
         let res
+        let gasLimit = ethers.BigNumber.from(50000)
+        const gasPrice = await getGasPrice()
+
         if (swapType === ETH_TO_TOKEN) {
+          gasLimit = gasLimit.add(
+            await wethGatewayContract.estimateGas.createMaticOrder(
+              account.toLowerCase(),
+              toCurrency.toLowerCase(),
+              minimumReturn,
+              stoplossAmount,
+              {
+                value: inputAmount,
+                gasPrice,
+              }
+            )
+          )
+
           res = await wethGatewayContract.createMaticOrder(
             account.toLowerCase(),
             toCurrency.toLowerCase(),
             minimumReturn,
             stoplossAmount,
-            { value: inputAmount }
+            {
+              value: inputAmount,
+              gasLimit,
+              gasPrice,
+            }
           )
         } else {
           const allowance = await getTokenAllowance(
@@ -591,9 +612,32 @@ export default function ExchangePage({ initialCurrency }) {
           if (allowance.lt(inputAmount)) {
             const tokenContract = await getERC20Contract(fromCurrency, library, account)
 
-            const tx = await tokenContract.approve(SYMPHONY_ADDRESSES[chainId], ethers.constants.MaxUint256)
+            gasLimit = gasLimit.add(
+              await tokenContract.estimateGas.approve(SYMPHONY_ADDRESSES[chainId], ethers.constants.MaxUint256, {
+                gasPrice,
+              })
+            )
+
+            const tx = await tokenContract.approve(SYMPHONY_ADDRESSES[chainId], ethers.constants.MaxUint256, {
+              gasLimit,
+              gasPrice,
+            })
             await tx.wait()
           }
+
+          gasLimit = gasLimit.add(
+            await symphonyContract.estimateGas.createOrder(
+              account.toLowerCase(),
+              fromCurrency.toLowerCase(),
+              toCurrency.toLowerCase(),
+              inputAmount,
+              minimumReturn,
+              stoplossAmount,
+              {
+                gasPrice,
+              }
+            )
+          )
 
           res = await symphonyContract.createOrder(
             account.toLowerCase(),
@@ -601,7 +645,11 @@ export default function ExchangePage({ initialCurrency }) {
             toCurrency.toLowerCase(),
             inputAmount,
             minimumReturn,
-            stoplossAmount
+            stoplossAmount,
+            {
+              gasLimit,
+              gasPrice,
+            }
           )
         }
 
@@ -615,7 +663,7 @@ export default function ExchangePage({ initialCurrency }) {
         setShowConfirm(true)
       }
     } catch (e) {
-      setOrderErrorMessage(e.data ? e.data.message: e.message)
+      setOrderErrorMessage(e.data ? e.data.message : e.message)
       setShowConfirm(true)
     }
   }
