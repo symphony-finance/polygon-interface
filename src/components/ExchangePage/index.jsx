@@ -32,6 +32,7 @@ import {
 
 import './ExchangePage.css'
 import { getGasPrice } from '../../utils/gas'
+import { SUPPORTED_ASSETS } from '../../contexts/supportedTokens'
 
 // Use to detach input from output
 let inputValue
@@ -556,6 +557,20 @@ export default function ExchangePage({ initialCurrency }) {
     } else if (swapType === TOKEN_TO_TOKEN) {
       fromCurrency = inputCurrency
       toCurrency = outputCurrency
+    }
+
+    if (!SUPPORTED_ASSETS.includes(toCurrency.toLowerCase())) {
+      setOrderErrorMessage(
+        'Output asset is not supported !! You can reach in Discord if you think this should be added.'
+      )
+      setShowConfirm(true)
+      return
+    }
+
+    if (fromCurrency.toLowerCase() === toCurrency.toLowerCase()) {
+      setOrderErrorMessage("Input and output asset shouldn't be same !!")
+      setShowConfirm(true)
+      return
     }
 
     try {

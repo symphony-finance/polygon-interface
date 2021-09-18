@@ -5,9 +5,7 @@ import { isAddress } from '../../utils'
 // import { ReactComponent as EthereumLogo } from '../../assets/images/ethereum-logo.svg'
 
 const TOKEN_ICON_API = address =>
-  `https://raw.githubusercontent.com/sushiswap/assets/master/blockchains/polygon/assets/${isAddress(
-    address
-  )}/logo.png`
+  `https://raw.githubusercontent.com/sushiswap/assets/master/blockchains/polygon/assets/${isAddress(address)}/logo.png`
 const BAD_IMAGES = {}
 
 const Image = styled.img`
@@ -35,7 +33,7 @@ export default function TokenLogo({ address, logoURI, size = '1rem', ...rest }) 
     // return <StyledEthereumLogo size={size} />
     path = "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x7D1AfA7B718fb893dB30A3aBc0Cfc608AaCfeBB0/logo.png"
   } else if (!error && !BAD_IMAGES[address]) {
-    path = logoURI !== "" ? logoURI : TOKEN_ICON_API(address.toLowerCase());
+    path = logoURI === "" || logoURI === undefined ? TOKEN_ICON_API(address) : logoURI;
   } else {
     return (
       <Emoji {...rest} size={size}>
