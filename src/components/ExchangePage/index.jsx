@@ -19,7 +19,7 @@ import { useTradeExactIn } from '../../hooks/trade'
 import { getExchangeRate } from '../../utils/rate'
 // import { useGasPrice } from '../../contexts/GasPrice'
 import { TransactionErrorModal } from '../TransactionConfirmationModal'
-import { useSymphonyContract, useWETHGatewayContract } from '../../hooks'
+import { useSymphonyContract, useWETHGatewayContract, useWETHContract } from '../../hooks'
 import { ACTION_PLACE_ORDER, useTransactionAdder } from '../../contexts/Transactions'
 import { amountFormatter, getERC20Contract, getTokenAllowance, getOrderId } from '../../utils'
 import {
@@ -324,6 +324,7 @@ export default function ExchangePage({ initialCurrency }) {
 
   const symphonyContract = useSymphonyContract()
   const wethGatewayContract = useWETHGatewayContract()
+  const wethContract = useWETHContract()
   const [inputError, setInputError] = useState()
 
   const addTransaction = useTransactionAdder()
@@ -548,32 +549,48 @@ export default function ExchangePage({ initialCurrency }) {
       ? ethers.BigNumber.from(ethers.utils.parseUnits(stoplossValue, outputDecimals))
       : ethers.BigNumber.from(0)
 
-    if (swapType === ETH_TO_TOKEN) {
-      fromCurrency = WETH_ADDRESSES[chainId]
-      toCurrency = outputCurrency
-    } else if (swapType === TOKEN_TO_ETH) {
-      fromCurrency = inputCurrency
-      toCurrency = WETH_ADDRESSES[chainId]
-    } else if (swapType === TOKEN_TO_TOKEN) {
-      fromCurrency = inputCurrency
-      toCurrency = outputCurrency
-    }
-
-    if (!SUPPORTED_ASSETS.includes(toCurrency.toLowerCase())) {
-      setOrderErrorMessage(
-        'Output asset is not supported !! You can reach in Discord if you think this should be added.'
-      )
-      setShowConfirm(true)
-      return
-    }
-
-    if (fromCurrency.toLowerCase() === toCurrency.toLowerCase()) {
-      setOrderErrorMessage("Input and output asset shouldn't be same !!")
-      setShowConfirm(true)
-      return
-    }
-
     try {
+      let res
+      let gasLimit = ethers.BigNumber.from(50000)
+      const gasPrice = await getGasPrice()
+
+      if (swapType === ETH_TO_TOKEN) {
+        fromCurrency = WETH_ADDRESSES[chainId]
+        toCurrency = outputCurrency
+      } else if (swapType === TOKEN_TO_ETH) {
+        if (String(inputCurrency).toLowerCase() === WETH_ADDRESSES[chainId].toLowerCase()) {
+          gasLimit = gasLimit.add(await wethContract.estimateGas.withdraw(inputAmount, { gasPrice }))
+          res = await wethContract.withdraw(inputAmount, {
+            gasLimit,
+            gasPrice,
+          })
+          return
+        } else {
+          // fromCurrency = inputCurrency
+          // toCurrency = WETH_ADDRESSES[chainId]
+          setOrderErrorMessage("Protocol only allows MATIC token for input. Use WMATIC instead.")
+          setShowConfirm(true)
+          return
+        }
+      } else if (swapType === TOKEN_TO_TOKEN) {
+        fromCurrency = inputCurrency
+        toCurrency = outputCurrency
+      }
+
+      if (!SUPPORTED_ASSETS.includes(toCurrency.toLowerCase())) {
+        setOrderErrorMessage(
+          'Output asset is not supported !! You can reach in Discord if you think this should be added.'
+        )
+        setShowConfirm(true)
+        return
+      }
+
+      if (fromCurrency.toLowerCase() === toCurrency.toLowerCase()) {
+        setOrderErrorMessage("Input and output asset shouldn't be same !!")
+        setShowConfirm(true)
+        return
+      }
+
       let order = {
         recipient: account.toLowerCase(),
         inputToken: fromCurrency.toLowerCase(),
@@ -587,10 +604,6 @@ export default function ExchangePage({ initialCurrency }) {
       const orderHash = await symphonyContract.orderHash(orderId)
 
       if (orderHash === ZERO_BYTES32) {
-        let res
-        let gasLimit = ethers.BigNumber.from(50000)
-        const gasPrice = await getGasPrice()
-
         if (swapType === ETH_TO_TOKEN) {
           gasLimit = gasLimit.add(
             await wethGatewayContract.estimateGas.createMaticOrder(
@@ -858,7 +871,12 @@ export default function ExchangePage({ initialCurrency }) {
           onClick={onPlace}
           warning={highSlippageWarning || executionRateWarning || customSlippageError === 'warning'}
         >
-          {customSlippageError === 'warning' ? t('placeAnyway') : t('place')}
+          {customSlippageError === 'warning'
+            ? t('placeAnyway')
+            : String(inputCurrency).toLowerCase() === WETH_ADDRESSES[chainId ? chainId : 137].toLowerCase() &&
+              swapType === TOKEN_TO_ETH
+            ? t('Unwrap')
+            : t('place')}
         </Button>
       </Flex>
       {rateDeltaFormatted && (

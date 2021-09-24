@@ -9,6 +9,7 @@ import {
   getExchangeContract,
   getSymphonyContract,
   getWETHGatewayContract,
+  getWETHContract,
   getUniswapV2Contracts,
   isAddress
 } from '../utils'
@@ -106,6 +107,18 @@ export function useWETHGatewayContract(withSignerIfPossible = true) {
   return useMemo(() => {
     try {
       return getWETHGatewayContract(chainId, library, withSignerIfPossible ? account : undefined)
+    } catch (e) {
+      return null
+    }
+  }, [chainId, library, withSignerIfPossible, account])
+}
+
+export function useWETHContract(withSignerIfPossible = true) {
+  const { chainId, library, account } = useActiveWeb3React()
+
+  return useMemo(() => {
+    try {
+      return getWETHContract(chainId, library, withSignerIfPossible ? account : undefined)
     } catch (e) {
       return null
     }

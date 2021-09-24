@@ -7,6 +7,7 @@ import ERC20_ABI from '../constants/abis/erc20'
 import ERC20_BYTES32_ABI from '../constants/abis/erc20_bytes32'
 import SYMPHONY_ABI from '../constants/abis/symphony.json'
 import WETH_GATEWAY_ABI from '../constants/abis/weth-gateway.json'
+import WETH_ABI from '../constants/abis/weth.json'
 import FACTORY_V2_ABI from '../constants/abis/factoryV2.json'
 import PAIR_ABI from '../constants/abis/pair.json'
 import { formatFixed } from '@uniswap/sdk'
@@ -15,6 +16,7 @@ import {
   WETH_GATEWAY_ADDRESSES,
   UNISWAPV2_ADDRESSES,
 } from '../constants'
+import { WNATIVE_ADDRESS } from '@sushiswap/sdk'
 
 export const ERROR_CODES = ['TOKEN_NAME', 'TOKEN_SYMBOL', 'TOKEN_DECIMALS'].reduce(
   (accumulator, currentValue, currentIndex) => {
@@ -136,6 +138,10 @@ export function getSymphonyContract(chainId, library, account) {
 
 export function getWETHGatewayContract(chainId, library, account) {
   return getContract(WETH_GATEWAY_ADDRESSES[chainId], WETH_GATEWAY_ABI, library, account)
+}
+
+export function getWETHContract(chainId, library, account) {
+  return getContract(WNATIVE_ADDRESS[chainId], WETH_ABI, library, account)
 }
 
 export function getUniswapV2Contracts(chainId, library, account) {
