@@ -5,6 +5,7 @@ import { useWeb3React } from '@web3-react/core'
 // import * as ls from 'local-storage'
 import { ethers } from 'ethers'
 import styled from 'styled-components'
+import Tooltip from '@reach/tooltip'
 
 import { Button } from '../../theme'
 import CurrencyInputPanel from '../CurrencyInputPanel'
@@ -12,6 +13,7 @@ import OversizedPanel from '../OversizedPanel'
 import ArrowDown from '../../assets/svg/SVGArrowDown'
 import SVGClose from '../../assets/svg/SVGClose'
 import SVGDiv from '../../assets/svg/SVGDiv'
+import InfoIcon from '../../assets/images/info-icon.png'
 import { useTokenDetails } from '../../contexts/Tokens'
 import { useAddressBalance } from '../../contexts/Balances'
 import { useFetchAllBalances } from '../../contexts/AllBalances'
@@ -33,6 +35,7 @@ import {
 import './ExchangePage.css'
 import { getGasPrice } from '../../utils/gas'
 import { SUPPORTED_ASSETS } from '../../contexts/supportedTokens'
+import { getTokenValueInUsd } from '../../utils/price'
 
 // Use to detach input from output
 let inputValue
@@ -105,6 +108,11 @@ const Flex = styled.div`
   button {
     max-width: 20rem;
   }
+`
+
+const Image = styled.img`
+  width: ${({ size }) => size};
+  background-color: transparent;
 `
 
 // ///
@@ -499,6 +507,53 @@ export default function ExchangePage({ initialCurrency }) {
     }
   }, [inputBalance, inputCurrency, t, inputValueParsed])
 
+  const [showApprove, setShowApprove] = useState(false)
+  const [isApproving, setIsApproving] = useState(false)
+
+  const [orderValue, setOrderValue] = useState('')
+  const [minValueWarning, setMinValueWarning] = useState(false)
+  const orderMinValue = Number(process.env.REACT_APP_ORDER_MIN_VALUE) || 100
+
+  useEffect(() => {
+    async function fetchData() {
+      if (account && inputCurrency && inputCurrency !== 'ETH') {
+        const inputValueCalculation = inputValueParsed
+        const allowance = await getTokenAllowance(
+          account.toLowerCase(),
+          inputCurrency,
+          SYMPHONY_ADDRESSES[chainId],
+          library
+        )
+
+        if (inputBalance && inputValueCalculation) {
+          if (inputBalance.gt(allowance)) {
+            setShowApprove(true)
+          } else {
+            setShowApprove(false)
+          }
+        }
+      }
+
+      if (inputCurrency && inputValueParsed) {
+        const inputValueUsd = await getTokenValueInUsd(
+          inputCurrency === 'ETH' ? WETH_ADDRESSES[chainId] : ethers.utils.getAddress(inputCurrency),
+          inputValueParsed
+        )
+        setOrderValue(inputValueUsd)
+
+        if (Number(inputValueUsd) < orderMinValue) {
+          setMinValueWarning(true)
+        } else {
+          setMinValueWarning(false)
+        }
+      } else {
+        setMinValueWarning(false)
+        setOrderValue('')
+      }
+    }
+    fetchData()
+  }, [inputBalance, inputCurrency, t, inputValueParsed, account, chainId, library, orderMinValue])
+
   // calculate dependent value
   useEffect(() => {
     if (independentField === OUTPUT || independentField === RATE) {
@@ -535,6 +590,7 @@ export default function ExchangePage({ initialCurrency }) {
   function formatBalance(value) {
     return `Balance: ${value}`
   }
+  const [isPlacing, setIsPlacing] = useState(false)
 
   async function onPlace() {
     let fromCurrency, toCurrency, inputAmount, minimumReturn, stoplossAmount
@@ -568,7 +624,7 @@ export default function ExchangePage({ initialCurrency }) {
         } else {
           // fromCurrency = inputCurrency
           // toCurrency = WETH_ADDRESSES[chainId]
-          setOrderErrorMessage("Protocol only allows MATIC token for input. Use WMATIC instead.")
+          setOrderErrorMessage('Protocol only allows MATIC token for input. Use WMATIC instead.')
           setShowConfirm(true)
           return
         }
@@ -650,7 +706,10 @@ export default function ExchangePage({ initialCurrency }) {
               gasLimit,
               gasPrice,
             })
+            setIsApproving(true)
             await tx.wait()
+            setShowApprove(false)
+            setIsApproving(false)
           }
 
           gasLimit = gasLimit.add(
@@ -682,9 +741,14 @@ export default function ExchangePage({ initialCurrency }) {
         }
 
         if (res.hash) {
+          setIsPlacing(true)
+
           order.orderId = orderId
           // saveOrder(account, order, chainId)
           addTransaction(res, { action: ACTION_PLACE_ORDER, order: order })
+
+          await res.wait()
+          setIsPlacing(false)
         }
       } else {
         setOrderErrorMessage('There is already an order with same order id')
@@ -693,6 +757,8 @@ export default function ExchangePage({ initialCurrency }) {
     } catch (e) {
       setOrderErrorMessage(e.data ? e.data.message : e.message)
       setShowConfirm(true)
+      setIsApproving(false)
+      setIsPlacing(false)
     }
   }
 
@@ -723,6 +789,7 @@ export default function ExchangePage({ initialCurrency }) {
         onValueChange={(inputValue) => {
           dispatchSwapState({ type: 'UPDATE_INDEPENDENT', payload: { value: inputValue, field: INPUT } })
         }}
+        orderValue={orderValue ? '$ ' + orderValue.toFixed(2) : null}
         showUnlock={showUnlock}
         selectedTokens={[inputCurrency, outputCurrency]}
         selectedTokenAddress={inputCurrency}
@@ -876,7 +943,13 @@ export default function ExchangePage({ initialCurrency }) {
             : String(inputCurrency).toLowerCase() === WETH_ADDRESSES[chainId ? chainId : 137].toLowerCase() &&
               swapType === TOKEN_TO_ETH
             ? t('Unwrap')
-            : t('place')}
+            : showApprove
+            ? isApproving
+              ? t('Approving...')
+              : t('Approve')
+            : isPlacing
+            ? t('Placing...')
+            : t('Place')}
         </Button>
       </Flex>
       {rateDeltaFormatted && (
@@ -886,6 +959,27 @@ export default function ExchangePage({ initialCurrency }) {
             : t('placeAbove', { rateDelta: rateDeltaFormatted })}
         </div>
       )}
+      {minValueWarning ? (
+        <div className="slippage-warning">
+          <span role="img" aria-label="warning">
+            ⚠️
+          </span>
+          Order might not execute. create with minimum ${orderMinValue}
+          <Tooltip
+            label="Relayer will only execute profitable orders so to be safe create order with more value"
+            style={{
+              background: 'hsla(0, 0%, 0%, 0.75)',
+              color: 'white',
+              border: 'none',
+              borderRadius: '24px',
+              padding: '0.5em 1em',
+              marginTop: '-64px',
+            }}
+          >
+            <Image style={{ marginLeft: '10px' }} alt="info-icon" src={InfoIcon} size="20px" />
+          </Tooltip>
+        </div>
+      ) : null}
       {/* {highSlippageWarning && (
         <div className="slippage-warning">
           <span role="img" aria-label="warning">

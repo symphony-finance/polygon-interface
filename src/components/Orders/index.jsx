@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useWeb3React } from '@web3-react/core'
-import * as ls from 'local-storage'
+// import * as ls from 'local-storage'
 import styled from 'styled-components'
 
 import { isAddress } from '../../utils'
 import { OrderCard } from '../OrderCard'
 import Circle from '../../assets/images/circle.svg'
-import { useSymphonyContract } from '../../hooks'
+// import { useSymphonyContract } from '../../hooks'
 import { OrdersHistory } from '../OrdersHistory'
 import { Spinner } from '../../theme'
 import { useAllPendingOrders, useAllPendingCancelOrders } from '../../contexts/Transactions'
@@ -20,19 +20,19 @@ const SpinnerWrapper = styled(Spinner)`
 // ///
 // Local storage
 // ///
-const LS_ORDERS = 'orders_'
+// const LS_ORDERS = 'orders_'
 
-function lsKey(key, account, chainId) {
-  return key + account.toString() + chainId
-}
+// function lsKey(key, account, chainId) {
+//   return key + account.toString() + chainId
+// }
 
-function getSavedOrders(account, chainId) {
-  if (!account) return []
+// function getSavedOrders(account, chainId) {
+//   if (!account) return []
 
-  console.log('Loading saved orders from storage location', account, lsKey(LS_ORDERS, account, chainId))
-  const raw = ls.get(lsKey(LS_ORDERS, account, chainId))
-  return raw == null ? [] : raw
-}
+//   console.log('Loading saved orders from storage location', account, lsKey(LS_ORDERS, account, chainId))
+//   const raw = ls.get(lsKey(LS_ORDERS, account, chainId))
+//   return raw == null ? [] : raw
+// }
 
 async function fetchUserOrders(account, chainId) {
   const query = `
@@ -84,30 +84,30 @@ async function fetchUserOrders(account, chainId) {
   }
 }
 
-async function getAllAssetsDetail(chainId) {
-  const query = `
-  query {
-    assetDetails {
-      asset
-      totalFunds
-      totalShares
-    }
-  }`
-  try {
-    const res = await fetch(ORDER_GRAPH[chainId], {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query }),
-    })
+// async function getAllAssetsDetail(chainId) {
+//   const query = `
+//   query {
+//     assetDetails {
+//       asset
+//       totalFunds
+//       totalShares
+//     }
+//   }`
+//   try {
+//     const res = await fetch(ORDER_GRAPH[chainId], {
+//       method: 'POST',
+//       headers: { 'Content-Type': 'application/json' },
+//       body: JSON.stringify({ query }),
+//     })
 
-    const { data } = await res.json()
+//     const { data } = await res.json()
 
-    return data.assetDetails
-  } catch (e) {
-    console.warn('Error loading orders from TheGraph', e)
-    return []
-  }
-}
+//     return data.assetDetails
+//   } catch (e) {
+//     console.warn('Error loading orders from TheGraph', e)
+//     return []
+//   }
+// }
 
 function useGraphOrders(account, chainId, deps = []) {
   const [state, setState] = useState({ openOrders: [], allOrders: [], assetDetails: [] })
@@ -118,9 +118,10 @@ function useGraphOrders(account, chainId, deps = []) {
       setTimeout(() => {
         fetchUserOrders(account, chainId).then(async (orders) => {
           console.log(`Fetched ${orders.allOrders.length} ${orders.openOrders.length} orders from the graph`)
-          const allAssetDetails = await getAllAssetsDetail(chainId)
+
+          // const allAssetDetails = await getAllAssetsDetail(chainId)
           setState({
-            allAssetDetails,
+            // allAssetDetails,
             allOrders: orders.allOrders,
             openOrders: orders.openOrders,
           })
@@ -133,31 +134,31 @@ function useGraphOrders(account, chainId, deps = []) {
   return state
 }
 
-function useSavedOrders(account, chainId, symphonyContract, deps = []) {
-  const [state, setState] = useState({ allOrders: [], openOrders: [] })
+// function useSavedOrders(account, chainId, symphonyContract, deps = []) {
+//   const [state, setState] = useState({ allOrders: [], openOrders: [] })
 
-  useEffect(() => {
-    console.log(`Requesting load orders from storage`)
-    if (isAddress(account)) {
-      const allOrders = getSavedOrders(account, chainId)
-      // console.log(`Loaded ${allOrders.length} orders from local storage`)
-      if (allOrders.length > 0) {
-        setState({
-          allOrders: allOrders,
-          openOrders: allOrders.filter((o) => o.inputAmount !== '0'),
-        })
-      }
-    }
-    // eslint-disable-next-line
-  }, [...deps, account, chainId, symphonyContract])
+//   useEffect(() => {
+//     console.log(`Requesting load orders from storage`)
+//     if (isAddress(account)) {
+//       const allOrders = getSavedOrders(account, chainId)
+//       // console.log(`Loaded ${allOrders.length} orders from local storage`)
+//       if (allOrders.length > 0) {
+//         setState({
+//           allOrders: allOrders,
+//           openOrders: allOrders.filter((o) => o.inputAmount !== '0'),
+//         })
+//       }
+//     }
+//     // eslint-disable-next-line
+//   }, [...deps, account, chainId, symphonyContract])
 
-  return state
-}
+//   return state
+// }
 
 export default function Orders() {
   const { t } = useTranslation()
   const { account, chainId } = useWeb3React()
-  const symphonyContract = useSymphonyContract()
+  // const symphonyContract = useSymphonyContract()
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
 
@@ -165,11 +166,11 @@ export default function Orders() {
     setLoading(!account)
   }, [account])
 
-  const pendingOrders = useAllPendingOrders()
-  const pendingCancelOrders = useAllPendingCancelOrders()
+  let pendingOrders = useAllPendingOrders()
+  let pendingCancelOrders = useAllPendingCancelOrders()
 
   // Get locally saved orders and the graph orders
-  const local = useSavedOrders(account, chainId, symphonyContract, [pendingOrders.length, pendingCancelOrders.length])
+  // const local = useSavedOrders(account, chainId, symphonyContract, [pendingOrders.length, pendingCancelOrders.length])
 
   // TODO: Remove deps if necessary
   const graph = useGraphOrders(account, chainId, [pendingOrders.length, pendingCancelOrders.length])
@@ -188,8 +189,8 @@ export default function Orders() {
     setOrders(graph.openOrders)
     // eslint-disable-next-line
   }, [
-    local.allOrders.length,
-    local.openOrders.length,
+    // local.allOrders.length,
+    // local.openOrders.length,
     // graph.allOrders.length,
     graph.openOrders.length,
     pendingOrders.length,
@@ -215,9 +216,9 @@ export default function Orders() {
                   <OrderCard
                     key={order.orderId}
                     order={order}
-                    inputAssetDetails={graph.allAssetDetails.filter(
-                      (assetDetails) => assetDetails.asset.toLowerCase() === order.inputToken.toLowerCase()
-                    )}
+                    // inputAssetDetails={graph.allAssetDetails.filter(
+                    //   (assetDetails) => assetDetails.asset.toLowerCase() === order.inputToken.toLowerCase()
+                    // )}
                   />
                 ))}
               </div>

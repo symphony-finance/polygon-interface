@@ -1,7 +1,11 @@
 import { getTokenReserves, getMarketDetails } from '@uniswap/sdk'
 // import { getTokenReserves, getMarketDetails } from '@sushiswap/sdk';
-
+import axios from "axios";
+import BigNumber from "bignumber.js";
+import { tokenList } from "./tokenList";
 import { getMedian, getMean } from './math'
+
+const coingeckoApi = "https://api.coingecko.com/api/v3";
 
 const DAI = 'DAI'
 const USDC = 'USDC'
@@ -43,3 +47,30 @@ export async function getUSDPrice(library) {
     return [ethPrice, stablecoinWeights]
   })
 }
+
+export const getTokenValueInUsd = async (address, amount) => {
+    try {
+        const tokenData = tokenList[address]
+        const name = tokenData.coingeckoId;
+        
+        const res = await axios.get(
+            `${coingeckoApi}/simple/price?ids=${name}&vs_currencies=usd`
+        )
+
+        if (res.data) {
+            const tokenPriceInUsd = new BigNumber(res.data[name].usd)
+
+            const inputAmount = new BigNumber(amount.toString()).dividedBy(
+                new BigNumber(10).exponentiatedBy(new BigNumber(tokenData.decimals))
+            );
+
+            return tokenPriceInUsd.times(inputAmount);
+        } else {
+            return undefined
+        }
+    } catch(e) {
+        console.log(`Price Coingecko:: ${e.message}`);
+        return undefined
+    }
+};
+

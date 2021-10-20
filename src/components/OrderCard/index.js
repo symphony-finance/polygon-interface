@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { ethers } from 'ethers'
 import styled from 'styled-components'
 import { useTranslation } from 'react-i18next'
@@ -66,7 +66,7 @@ export function OrderCard(props) {
   const { chainId } = useWeb3React()
 
   const order = props.order
-  const inputAssetDetails = props.inputAssetDetails[0]
+  // const inputAssetDetails = props.inputAssetDetails[0]
 
   const inputToken = order.inputToken === ETH_ADDRESS.toLowerCase() ? 'ETH' : ethers.utils.getAddress(order.inputToken)
   const outputToken =
@@ -114,18 +114,26 @@ export function OrderCard(props) {
   const minReturnAmount = ethers.BigNumber.from(order.minReturnAmount)
   const stoplossAmount = ethers.BigNumber.from(order.stoplossAmount)
 
-  const currentOrderValue = Number(inputAssetDetails.totalFunds) > 0 ?
-    ethers.BigNumber.from(order.shares)
-      .mul(ethers.BigNumber.from(inputAssetDetails.totalFunds))
-      .div(ethers.BigNumber.from(inputAssetDetails.totalShares))
-    : ethers.BigNumber.from("0");
-
-  const yieldEarned = currentOrderValue.gt(0) ? currentOrderValue.sub(inputAmount) : ethers.BigNumber.from("0");
-
   const explorerLink = last ? getEtherscanLink(chainId, last.response.hash, 'transaction') : undefined
 
   const rateFromTo = getExchangeRate(inputAmount, fromDecimals, minReturnAmount, toDecimals, false)
   const rateToFrom = getExchangeRate(inputAmount, fromDecimals, minReturnAmount, toDecimals, true)
+
+  const [yieldEarned, setYieldEarned] = useState("");
+
+  const checkYield = async () => {
+    const totalFunds = await symphonyContract.getTotalFunds(order.inputToken);
+    const totalShares = await symphonyContract.totalAssetShares(order.inputToken);
+
+    const currentOrderValue = Number(totalFunds) > 0 ?
+      ethers.BigNumber.from(order.shares)
+        .mul(ethers.BigNumber.from(totalFunds))
+        .div(ethers.BigNumber.from(totalShares))
+      : ethers.BigNumber.from("0");
+
+    const yieldEarned = currentOrderValue.gt(0) ? currentOrderValue.sub(inputAmount) : ethers.BigNumber.from("0");
+    setYieldEarned(yieldEarned);
+  }
 
   // const gasPrice = useGasPrice()
   // const gasLimit = GENERIC_GAS_LIMIT_ORDER_EXECUTE
@@ -211,11 +219,6 @@ export function OrderCard(props) {
       <p>
         {`Sell: ${amountFormatter(inputAmount, fromDecimals, 6)}`} {fromSymbol}
       </p>
-      {yieldEarned.gt(0) ?
-        <p>
-          {`Yield Earned: ${amountFormatter(yieldEarned, fromDecimals, 6)}`} {fromSymbol}
-        </p>
-        : null}
       <p>
         {`Receive: ${amountFormatter(minReturnAmount, toDecimals, 6)}`} {toSymbol}
       </p>
@@ -225,6 +228,22 @@ export function OrderCard(props) {
       <p>
         {`Rate: ${amountFormatter(rateFromTo, 18, 6)}`} {fromSymbol}/{toSymbol} - {amountFormatter(rateToFrom, 18, 6)}{' '}
         {toSymbol}/{fromSymbol}
+      </p>
+      <p>
+        <span>Yield Earned: &nbsp;</span>
+        <span>
+          {yieldEarned > 0 ?
+            <span>{`${amountFormatter(yieldEarned, fromDecimals, 6)}`} {fromSymbol} + Extra WMATIC (Aave)</span>
+            :
+            <span
+              selected={true}
+              onClick={() => checkYield()}
+              style={{ cursor: 'pointer', textDecoration: 'underline', color: "#87c122" }}
+            >
+              check
+            </span>
+          }
+        </span>
       </p>
       {/* <Tooltip
         label={tooltipText}

@@ -275,7 +275,8 @@ export default function CurrencyInputPanel({
   selectedTokenAddress = '',
   showUnlock,
   value,
-  showCurrencySelector = true
+  showCurrencySelector = true,
+  orderValue
 }) {
   const { t } = useTranslation()
 
@@ -401,6 +402,13 @@ export default function CurrencyInputPanel({
           </ErrorSpan>
         </LabelRow>
         {_renderInput()}
+
+        <LabelRow style={{ paddingTop: 0 }}>
+          <LabelContainer>
+            <span style={{ fontSize: '0.9rem' }}>{orderValue}</span>
+          </LabelContainer>
+        </LabelRow>
+
       </Container>
       {!disableTokenSelect && (
         <CurrencySelectModal
