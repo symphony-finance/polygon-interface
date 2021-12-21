@@ -52,11 +52,6 @@ async function fetchUserOrders(account, chainId) {
       inputAmount
       minReturnAmount
       stoplossAmount
-      inputTokenSymbol
-      outputTokenSymbol
-      decodedInputAmount
-      decodedMinReturnAmount
-      decodedStoplossAmount
       orderEncodedData
       shares
       createdAtBlock
