@@ -10,7 +10,7 @@
   "send": "Send",
   "sendAnyway": "Send Anyway",
   "pool": "Pool",
-  "betaWarning": "This project is audited but use at your own risk.",
+  "betaWarning": "This version will be deprecated soon.",
   "input": "Input",
   "output": "Output",
   "estimated": "At least",
@@ -98,7 +98,7 @@
   "relayerFee": "The relayer will execute the order with a GAS price of",
   "gasPrice": "Gas Price (GWEI)",
   "feeFaq": "Every order has a fee which is the payment to the relayer for performing the trade. This fee should be higher than the transaction cost of executing the order. Lowering this, increase the risk of the order to not being executed making inviable to cover the order execution fees.",
-  "seeHowItWorks": "See how it works",
+  "seeHowItWorks": "Go to YOLO v2",
   "customGasPrice": "Custom gas price value (GWEI)",
   "notExecuted": "Your order will not be executed",
   "mayNotExecuted": "Your order may not be executed"
